@@ -4,7 +4,7 @@ Python library for solving Job Scheduling as a Constraint Satisfaction Problem
 # Basic Usage
 To run:
 ```
-python3 job_scheduling.py [filename] [--log LEVEL]
+python3 job_scheduling.py [filename] [number_rooms] [--log LEVEL]
 ```
 
 # File Fomat
