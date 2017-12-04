@@ -1,4 +1,4 @@
-import csp
+from csp import JobSchedulingCSP
 import argparse
 import logging
 import numpy
@@ -42,6 +42,11 @@ def parse_command_line_arguments():
     return args
 
 def setup():
+    """
+    Parse command line arguments and return the things needed for CSP
+    :return: jobs: 2D array
+             number_rooms: the number of rooms for the jobs
+    """
 
     # get command args
     args = parse_command_line_arguments()
@@ -51,20 +56,29 @@ def setup():
 
     #try to read in the file
     jobs = None
-    csp = None
     try:
+        # read the file
         jobs = numpy.loadtxt(filename, delimiter=",")
         logging.debug(jobs)
     except Exception as err:
+        # log and exit
         logging.critical("Invalid File!")
         logging.debug(err)
         exit(1)
 
-    return csp, jobs
+    return jobs, number_rooms
 
-def run():
-    pass
+def run(jobs, number_rooms):
+    """
+    Run the algorithm until completion
+    :param jobs: 2D array for the jobs with (start, finish)
+    :param number_rooms: the number of rooms
+    :return: the assignments or None if not possible
+    """
+
+    # create CSP
+    csp = JobSchedulingCSP(jobs, number_rooms)
 
 if __name__ == "__main__":
-    csp, jobs = setup()
-    run()
+    jobs, number_rooms = setup()
+    run(jobs, number_rooms)
