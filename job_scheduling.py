@@ -78,6 +78,7 @@ def run(jobs, number_rooms):
 
     # create CSP
     csp = JobSchedulingCSP(jobs, number_rooms)
+    solution_found = csp.find_solution()
 
 if __name__ == "__main__":
     jobs, number_rooms = setup()
