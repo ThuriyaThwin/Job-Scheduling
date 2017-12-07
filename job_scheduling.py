@@ -17,7 +17,8 @@ def set_log_level(level):
         'WARNING': logging.WARNING,
         'INFO': logging.INFO,
         'DEBUG': logging.DEBUG,
-    }.get(level, logging.WARNING))  # should-be-impossible-super-duper-fallback
+    }.get(level, logging.WARNING),
+                        filename="csp.log")  # should-be-impossible-super-duper-fallback
     return level
 
 
@@ -80,7 +81,7 @@ def run(jobs, number_rooms):
     csp = JobSchedulingCSP(jobs, number_rooms)
     solution_found = csp.find_solution()
 
-    print("Solution Found!" if solution_found else "No Solution Found")
+    print("Solution Found!" if solution_found else "No Solution Found!")
 
 if __name__ == "__main__":
     jobs, number_rooms = setup()
