@@ -267,7 +267,7 @@ class JobSchedulingCSP:
         #iterate through jobs
         for j in self.jobs:
             # if we find an unassigned job, then are not in goal state
-            if j.assigned_room is False:
+            if j.assigned is False:
                 return False
 
         # we have gotten through all jobs, and all are assigned

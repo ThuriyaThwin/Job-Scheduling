@@ -53,7 +53,7 @@ def setup():
     args = parse_command_line_arguments()
     # take values out of args dict into variables
     filename = args.csp_file
-    number_rooms = args.number_rooms
+    number_rooms = int(args.number_rooms)
 
     #try to read in the file
     jobs = None
