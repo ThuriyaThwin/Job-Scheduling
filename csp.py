@@ -88,6 +88,24 @@ class JobSchedulingCSP:
             job_to_assign = self.get_job_to_assign()
             # assign a value
             self.jobs = self.assign(job_to_assign)
+            #check constraint
+            self.ac3()
+
+    def ac3(self):
+        """
+        Perform ac3 consistency checking
+        """
+        # for each job
+        for job in self.jobs:
+            #  if this job has been assigned
+            if job.assigned:
+                # look at every other job
+                for j in self.jobs:
+                    # if jobs overlap
+                    if job.start_time < j.finish_time and job.finish_time > j.finish_time:
+                        # remove room from domain of the job
+                        j.domain.remove(job.room)
+
 
     def assign(self, job):
         """
