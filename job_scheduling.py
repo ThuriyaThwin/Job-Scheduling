@@ -85,9 +85,34 @@ def run(jobs, number_rooms):
     solution_found = csp.find_solution()
     end_time = time.process_time()
 
+    #now run with backjumping
+    csp_backjumping = JobSchedulingCSP(jobs, number_rooms)
+    start_time_backjumping = time.process_time()
+    back_jumping_solution_found = csp_backjumping.find_backjumping_solution()
+    end_time_backjumping = time.process_time()
+
+
     # if we found a solution
+    print("\n----------------------------------\nWithout Backjumping\n----------------------------------")
+    print_results(csp, solution_found, end_time, start_time)
+
+    # with backjumping
+    print("\n----------------------------------\nWithout Backjumping\n----------------------------------")
+    print_results(csp_backjumping, back_jumping_solution_found, end_time_backjumping, start_time_backjumping)
+    
+
+def print_results(csp, solution_found, end_t, start_t):
+    """
+    Print the results
+    :param csp: JobSchedulingCSP object
+    :param solution_found: boolean if a solution was found
+    :param end_t: the end time
+    :param start_t: the start time
+    """
+
     if solution_found:
-        time_to_solution = (end_time - start_time) * 1000
+
+        time_to_solution = (end_t - start_t) * 1000
         print("Solution Found in {:.3f}ms!".format(time_to_solution))
         # print the assignments
         for job in csp.jobs:
@@ -95,7 +120,6 @@ def run(jobs, number_rooms):
     else:
         # print the error
         print("No Solution Found!\nYou can check csp.log to see if an error occurred.")
-
 
 if __name__ == "__main__":
     jobs, number_rooms = setup()
