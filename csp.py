@@ -88,6 +88,7 @@ class JobSchedulingCSP:
             while not self.in_goal_state():
                 # get the job to assign
                 job_to_assign = self.get_job_to_assign()
+                logging.debug("Assigning job: ({},{})".format(job_to_assign.start_time, job_to_assign.finish_time))
                 # assign a value
                 self.jobs = self.assign(job_to_assign)
                 #check constraint
@@ -121,7 +122,7 @@ class JobSchedulingCSP:
         :return: the new set of jobs with this assignment
         """
         # make sure it is eligible for assignemnt
-        if job.assigned == False:
+        if job.assigned == True:
             raise Exception("Cannot assign job. Job is already assigned!")
 
         # get index
@@ -175,6 +176,7 @@ class JobSchedulingCSP:
         # make assignment
         job.assigned = True
         job.room = room
+        logging.debug("Assigning to room {}".format(room))
 
         # get the new jobs
         new_jobs = other_jobs
@@ -196,8 +198,10 @@ class JobSchedulingCSP:
             # if the st, ft, and assigned are the same - return it
             if j.start_time == job.start_time and j.finish_time == job.finish_time and j.assigned == job.assigned:
                 # return the index
+                logging.debug("Found job at index {}".format(i))
                 return i
 
+        logging.debug("Could not find job index")
         return None
 
     def get_job_to_assign(self):
@@ -268,10 +272,12 @@ class JobSchedulingCSP:
         for j in self.jobs:
             # if we find an unassigned job, then are not in goal state
             if j.assigned is False:
+                logging.debug("Found unassigned job!")
                 return False
 
         # we have gotten through all jobs, and all are assigned
         # we are in goal state
+        logging.info("In Goal State!")
         return True
 
 
