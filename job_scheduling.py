@@ -2,6 +2,7 @@ from csp import JobSchedulingCSP
 import argparse
 import logging
 import numpy
+import time
 
 def set_log_level(level):
     """
@@ -80,11 +81,14 @@ def run(jobs, number_rooms):
     # create CSP
     csp = JobSchedulingCSP(jobs, number_rooms)
     #try to find a solution
+    start_time = time.process_time()
     solution_found = csp.find_solution()
+    end_time = time.process_time()
 
     # if we found a solution
     if solution_found:
-        print("Solution Found!")
+        time_to_solution = (end_time - start_time) * 1000
+        print("Solution Found in {:.3f}ms!".format(time_to_solution))
         # print the assignments
         for job in csp.jobs:
             print("({}, {}) assigned to Room: {}".format(job.start_time, job.finish_time, job.room))
