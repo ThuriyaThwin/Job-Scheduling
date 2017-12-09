@@ -79,9 +79,19 @@ def run(jobs, number_rooms):
 
     # create CSP
     csp = JobSchedulingCSP(jobs, number_rooms)
+    #try to find a solution
     solution_found = csp.find_solution()
 
-    print("Solution Found!" if solution_found else "No Solution Found!")
+    # if we found a solution
+    if solution_found:
+        print("Solution Found!")
+        # print the assignments
+        for job in csp.jobs:
+            print("({}, {}) assigned to Room: {}".format(job.start_time, job.finish_time, job.room))
+    else:
+        # print the error
+        print("No Solution Found!\nYou can check csp.log to see if an error occurred.")
+
 
 if __name__ == "__main__":
     jobs, number_rooms = setup()

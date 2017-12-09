@@ -20,6 +20,20 @@ class Job:
         self.assigned = False
         self.room = None
 
+    def __eq__(self, other):
+        """
+        Define equality
+        :param other: the other job
+        :return: True if equal, else false
+        """
+
+        # if everything is the same
+        if self.start_time == other.start_time and self.finish_time == other.finish_time and self.domain == other.domain \
+            and self.assigned == other.assigned and self.room == other.room:
+                return True
+        # if something is different
+        return False
+
 
 class JobSchedulingCSP:
     """
@@ -38,11 +52,11 @@ class JobSchedulingCSP:
         # for each job passed in
         for i,j in jobs:
             # create job object
-            job = Job(i,j, number_rooms)
+            job = Job(int(i),int(j), int(number_rooms))
             # add job to jobs list
             self.jobs.append(job)
         # assign num rooms
-        self.number_rooms = number_rooms
+        self.number_rooms = int(number_rooms)
 
     def get_eft(self):
         """
@@ -103,6 +117,7 @@ class JobSchedulingCSP:
         """
         Perform ac3 consistency checking
         """
+        logging.info("Running AC-3...")
         # for each job
         for job in self.jobs:
             #  if this job has been assigned
@@ -110,9 +125,13 @@ class JobSchedulingCSP:
                 # look at every other job
                 for j in self.jobs:
                     # if jobs overlap
-                    if job.start_time < j.finish_time and job.finish_time > j.finish_time:
+                    if j.start_time in range(job.start_time, job.finish_time) or j.finish_time in range(job.start_time, job.finish_time) and job != j:
                         # remove room from domain of the job
-                        j.domain.remove(job.room)
+                        logging.debug("Removing {} from domian of job ({}, {}) with domain {}".format(job.room, j.start_time, j.finish_time, j.domain))
+                        try:
+                            j.domain.remove(job.room)
+                        except Exception:
+                            logging.debug("Room already removed from domain")
 
 
     def assign(self, job):
@@ -137,7 +156,10 @@ class JobSchedulingCSP:
         del other_jobs[index]
 
         # dependencies between each other
-        room_dependencies = [0 for i in self.number_rooms]
+        room_dependencies = []
+        for i in range(self.number_rooms):
+            room_dependencies.append(0)
+
         # each room
         for i in range(self.number_rooms):
             # each job that isn't the one being assigned
@@ -146,6 +168,8 @@ class JobSchedulingCSP:
                 if i in j.domain:
                     # add 1 to the dependency
                     room_dependencies[i] += 1
+
+        logging.debug("Room dependencies: {}".format(room_dependencies))
 
         # assign the job to the room with the least dependencies in the domain of the job
         possible_assignments = []
