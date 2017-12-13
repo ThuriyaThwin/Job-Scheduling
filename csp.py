@@ -15,10 +15,19 @@ class Job:
         self.start_time = start_time
         self.finish_time = finish_time
         self.domain = []
+        self.initial_domain_size = domain_size
         for i in range(domain_size):
             self.domain.append(i)
         self.assigned = False
         self.room = None
+
+    def reset(self):
+        self.domain = []
+        for i in range(self.initial_domain_size):
+            self.domain.append(i)
+        self.assigned = False
+        self.room = None
+
 
     def __eq__(self, other):
         """
@@ -40,11 +49,12 @@ class JobSchedulingCSP:
     A job scheduling CSP class
     """
 
-    def __init__(self, jobs, number_rooms):
+    def __init__(self, jobs, number_rooms, threshold):
         """
 
         :param jobs: A 2D array of jobs with (start, finish)
         :param number_rooms: the number of rooms
+        :param threshold: the threshold to backjump
         """
         # initialize local jobs
         self.jobs = []
@@ -57,6 +67,9 @@ class JobSchedulingCSP:
             self.jobs.append(job)
         # assign num rooms
         self.number_rooms = int(number_rooms)
+        self.computations = 0
+        self.num_backjumps = 0
+        self.backjumping_threshold = threshold
 
     def get_eft(self):
         """
@@ -70,6 +83,7 @@ class JobSchedulingCSP:
         eft = -1
         # foreach job
         for job in self.jobs:
+            self.computations += 1
             if job.assigned == False:
                 # if the finish time is less than current min
                 if job.finish_time < eft:
@@ -108,9 +122,14 @@ class JobSchedulingCSP:
                 #check constraint
                 self.ac3()
 
+                logging.debug("Required {} computations".format(self.computations))
+
                 # check for backjump
                 if use_backjumping:
                     self.backjump()
+
+                # reset computation counter
+                self.computations = 0
 
         except Exception as err:
             logging.critical(err)
@@ -126,7 +145,14 @@ class JobSchedulingCSP:
         by changing assignments so that future assignments are
         more efficient due to being in a new part of the search space
         """
-        pass
+        logging.debug("Checking backjumping...")
+        if self.computations > self.backjumping_threshold:
+            logging.debug("BACKJUMPING!")
+            self.num_backjumps += 1
+            for j in self.jobs:
+                j.reset()
+
+
 
     def find_backjumping_solution(self):
         """
@@ -149,7 +175,7 @@ class JobSchedulingCSP:
                     # if jobs overlap
                     if j.start_time in range(job.start_time, job.finish_time) or j.finish_time in range(job.start_time, job.finish_time) and job != j:
                         # remove room from domain of the job
-                        logging.debug("Removing {} from domian of job ({}, {}) with domain {}".format(job.room, j.start_time, j.finish_time, j.domain))
+                        logging.debug("Removing {} from domain of job ({}, {}) with domain {}".format(job.room, j.start_time, j.finish_time, j.domain))
                         try:
                             j.domain.remove(job.room)
                         except Exception:
@@ -178,17 +204,20 @@ class JobSchedulingCSP:
         del other_jobs[index]
 
         # dependencies between each other
+        self.computations = 0
         room_dependencies = []
         for i in range(self.number_rooms):
             room_dependencies.append(0)
-
+            self.computations += 1
         # each room
+
         for i in range(self.number_rooms):
             # each job that isn't the one being assigned
             for j in other_jobs:
                 # if this room in the domain of the job
                 if i in j.domain:
                     # add 1 to the dependency
+                    self.computations += 1
                     room_dependencies[i] += 1
 
         logging.debug("Room dependencies: {}".format(room_dependencies))
@@ -197,6 +226,7 @@ class JobSchedulingCSP:
         possible_assignments = []
         # for every room with dependencies
         for room, num_dependencies in enumerate(room_dependencies):
+            self.computations += 1
             # if the room is in the job's domain
             if room in job.domain:
                 # record the room number and the num dependencies
@@ -207,17 +237,32 @@ class JobSchedulingCSP:
                 # add to possible dependencies
                 possible_assignments.append(record)
 
-        # go through possible assignments, and make the one with the least number of dependencies
-        min_dep = possible_assignments[0]["dependencies"]
-        room = possible_assignments[0]["room"]
-        # for every assignment
-        for a in possible_assignments:
-            # if this is the least dependencies
-            if a["dependencies"] < min_dep:
-                # set room
-                room = a["room"]
-                # set min dep
-                min_dep = a["dependencies"]
+        #init room
+        room = None
+        # if there are no backjumps then just assign it immediately
+        if self.num_backjumps == 0:
+            # get lcv
+            i, computations = get_lcv(possible_assignments)
+            # get the room number
+            room = possible_assignments[i]["room"]
+            # accum computations
+            self.computations += computations
+        else:
+            # we need to drop the first n best for the backjump
+            i = computations = None
+            # run num_backjumps times
+            for j in range(self.num_backjumps):
+                # get lcv
+                i, computations = get_lcv(possible_assignments)
+                # delete the best one, and run again
+                if i is not None:
+                    del possible_assignments[i]
+                else:
+                    raise Exception("No more rooms to assign in backjumping!")
+
+            # now try it
+            room = possible_assignments[i]["room"]
+            self.computations += computations
 
         # make assignment
         job.assigned = True
@@ -229,8 +274,10 @@ class JobSchedulingCSP:
         # add the newly assigned
         new_jobs.append(job)
 
+
         # assign the new jobs
         return new_jobs
+
 
     def job_to_index(self, job):
         """
@@ -291,6 +338,7 @@ class JobSchedulingCSP:
 
         # for each job
         for j in self.jobs:
+            self.computations += 1
             #make sure this job can be selected
             if j.assigned == False:
                 # if its less than, then we have a new min
@@ -328,4 +376,23 @@ class JobSchedulingCSP:
 
 
 
-
+def get_lcv(possible_assignments):
+    """
+    Get the least constraining value from the array
+    :param possible_assignments: the array of assignments
+    :return: the index at which the lcv occurs and the num computations required
+    """
+    computations = 0
+    index = 0
+    # go through possible assignments, and make the one with the least number of dependencies
+    min_dep = possible_assignments[0]["dependencies"]
+    room = possible_assignments[0]["room"]
+    # for every assignment
+    for i, a in enumerate(possible_assignments):
+        computations += 1
+        # if this is the least dependencies
+        if a["dependencies"] < min_dep:
+            index = i
+            # set min dep
+            min_dep = a["dependencies"]
+    return index, computations

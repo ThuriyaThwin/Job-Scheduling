@@ -3,6 +3,7 @@ import argparse
 import logging
 import numpy
 import time
+import os
 
 def set_log_level(level):
     """
@@ -10,7 +11,7 @@ def set_log_level(level):
     :param level: The level at which to log
     :return: the now set logging level
     """
-
+    os.unlink("csp.log")
     #set the logging level
     logging.basicConfig(level={
         'CRITICAL': logging.CRITICAL,
@@ -36,6 +37,7 @@ def parse_command_line_arguments():
     # the number rooms to house the jobs
     parser.add_argument("number_rooms", help="The number of rooms in which to schedule the jobs")
     # the logging level
+    parser.add_argument('--threshold', help="The backjumping threshold")
     parser.add_argument('--log', type=set_log_level, default='WARNING', choices=['DEBUG', 'INFO', 'WARNING', 'ERROR'],
                         help="Logging level")
     # parse them
@@ -56,6 +58,7 @@ def setup():
     filename = args.csp_file
     number_rooms = int(args.number_rooms)
 
+
     #try to read in the file
     jobs = None
     try:
@@ -68,9 +71,15 @@ def setup():
         logging.debug(err)
         exit(1)
 
-    return jobs, number_rooms
+    #set threshold
+    threshold = args.threshold if args.threshold else 2**(len(jobs) + number_rooms)
+    logging.debug("threshold set at: {}".format(threshold))
+    logging.debug("Length of jobs: {}".format(len(jobs)))
+    logging.debug("Number rooms: {}".format(number_rooms))
 
-def run(jobs, number_rooms):
+    return jobs, number_rooms, threshold
+
+def run(jobs, number_rooms, threshold):
     """
     Run the algorithm until completion
     :param jobs: 2D array for the jobs with (start, finish)
@@ -79,14 +88,14 @@ def run(jobs, number_rooms):
     """
 
     # create CSP
-    csp = JobSchedulingCSP(jobs, number_rooms)
+    csp = JobSchedulingCSP(jobs, number_rooms, threshold)
     #try to find a solution
     start_time = time.process_time()
     solution_found = csp.find_solution()
     end_time = time.process_time()
 
     #now run with backjumping
-    csp_backjumping = JobSchedulingCSP(jobs, number_rooms)
+    csp_backjumping = JobSchedulingCSP(jobs, number_rooms, threshold)
     start_time_backjumping = time.process_time()
     back_jumping_solution_found = csp_backjumping.find_backjumping_solution()
     end_time_backjumping = time.process_time()
@@ -121,6 +130,9 @@ def print_results(csp, solution_found, end_t, start_t):
         # print the error
         print("No Solution Found!\nYou can check csp.log to see if an error occurred.")
 
+def main():
+    jobs, number_rooms, threshold = setup()
+    run(jobs, number_rooms, threshold)
+
 if __name__ == "__main__":
-    jobs, number_rooms = setup()
-    run(jobs, number_rooms)
+    main()
