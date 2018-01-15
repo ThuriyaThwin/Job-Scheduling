@@ -113,30 +113,6 @@ class JobSchedulingCSP:
 
         return True
 
-    def find_backjumping_solution(self):
-        """
-        Find a solution using backjumping
-        :return: True if solution found, else false
-        """
-        # while not in goal state
-
-        try:
-            while not self.in_goal_state():
-                # get the job to assign
-                job_to_assign = self.get_job_to_assign()
-                logging.debug("Assigning job: ({},{})".format(job_to_assign.start_time, job_to_assign.finish_time))
-                # assign a value
-                self.jobs = self.assign(job_to_assign)
-                # check constraint
-                self.ac3()
-        except Exception as err:
-            logging.critical(err)
-            return False
-
-        return True
-
-
-
     def ac3(self):
         """
         Perform ac3 consistency checking
