@@ -90,14 +90,12 @@ def run(jobs, number_rooms, threshold):
     # create CSP
     csp = JobSchedulingCSP(jobs, number_rooms, threshold)
     #try to find a solution
-    logging.info("----------------------------------\nWithout Backjumping\n----------------------------------")
     start_time = time.process_time()
     solution_found = csp.find_solution()
     end_time = time.process_time()
 
     #now run with backjumping
     csp_backjumping = JobSchedulingCSP(jobs, number_rooms, threshold)
-    logging.info("----------------------------------\nWith Backjumping\n----------------------------------")
     start_time_backjumping = time.process_time()
     back_jumping_solution_found = csp_backjumping.find_backjumping_solution()
     end_time_backjumping = time.process_time()

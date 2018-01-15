@@ -255,15 +255,10 @@ class JobSchedulingCSP:
                 # get lcv
                 i, computations = get_lcv(possible_assignments)
                 # delete the best one, and run again
-                if i is None:
-                    raise Exception("No more rooms to assign in backjumping!")
-                # only delete if there is another possible assignment
-                elif len(possible_assignments) > 1:
+                if i is not None:
                     del possible_assignments[i]
-                # no other assignments - assign this one
                 else:
-                    break
-
+                    raise Exception("No more rooms to assign in backjumping!")
 
             # now try it
             room = possible_assignments[i]["room"]
