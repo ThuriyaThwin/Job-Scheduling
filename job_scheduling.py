@@ -97,9 +97,9 @@ def run(jobs, number_rooms):
     print_results(csp, solution_found, end_time, start_time)
 
     # with backjumping
-    print("\n----------------------------------\nWith Backjumping\n----------------------------------")
+    print("\n----------------------------------\nWithout Backjumping\n----------------------------------")
     print_results(csp_backjumping, back_jumping_solution_found, end_time_backjumping, start_time_backjumping)
-
+    
 
 def print_results(csp, solution_found, end_t, start_t):
     """
