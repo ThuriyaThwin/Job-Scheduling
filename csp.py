@@ -90,7 +90,7 @@ class JobSchedulingCSP:
         min_eft_job = jobs[0]
         return min_eft_job
 
-    def find_solution(self, use_backjumping=False):
+    def find_solution(self):
         """
         Find a solution to the given CSP if possible
         :return: True if solution found, else fase
@@ -107,33 +107,35 @@ class JobSchedulingCSP:
                 self.jobs = self.assign(job_to_assign)
                 #check constraint
                 self.ac3()
-
-                # check for backjump
-                if use_backjumping:
-                    self.backjump()
-
         except Exception as err:
             logging.critical(err)
             return False
 
         return True
 
-    def backjump(self):
-        """
-        Backjump
-
-        The idea is to get to a new part of the search space
-        by changing assignments so that future assignments are
-        more efficient due to being in a new part of the search space
-        """
-        pass
-
     def find_backjumping_solution(self):
         """
-        Find a solution usign backjumping
+        Find a solution using backjumping
         :return: True if solution found, else false
         """
-        return self.find_solution(use_backjumping=True)
+        # while not in goal state
+
+        try:
+            while not self.in_goal_state():
+                # get the job to assign
+                job_to_assign = self.get_job_to_assign()
+                logging.debug("Assigning job: ({},{})".format(job_to_assign.start_time, job_to_assign.finish_time))
+                # assign a value
+                self.jobs = self.assign(job_to_assign)
+                # check constraint
+                self.ac3()
+        except Exception as err:
+            logging.critical(err)
+            return False
+
+        return True
+
+
 
     def ac3(self):
         """
